@@ -18,17 +18,50 @@ module GrapeSlate
 
       attr_accessor :route
 
+      def curl_code_sample
+        <<~BASH
+        ``` shell
+        curl #{documentable_route_path(route)}" \
+          --request #{route.request_method}\
+          --data '#{param_examples.to_json}' \
+          #{curl_headers} \
+          --verbose
+        ```
+        BASH
+      end
+
+      def ruby_code_sample
+        <<~RUBY
+        ``` ruby
+        Faraday.#{route.request_method.downcase}("#{documentable_route_path(route)}", \
+        params: #{param_examples}, 
+        headers: #{headers})
+        ```
+        RUBY
+      end
+
+      def js_code_sample
+        <<~JS
+        ``` javascript
+        let response = await fetch('#{documentable_route_path(route)}', {
+          method: '#{route.request_method}',
+          headers: #{headers.to_json},
+          body: #{param_examples.to_json}
+        });
+
+        let result = await response.json();
+        console.log(result.message);
+        ```
+        JS
+      end
+
+
       def code_sample
-        array = []
-        array << "```shell\n"
-        array << "curl #{documentable_route_path(route)}"
-        array << "--request #{route.request_method}"
-        array << "--data '#{param_examples.to_json}'"    unless param_examples.empty?
-        array << "--data-binary @#{binary_data_example}" unless binary_data_example.nil?
-        array << headers
-        array << "--verbose\n"
-        array << "```\n"
-        array.join(' ')
+        [
+          curl_code_sample,
+          ruby_code_sample,
+          js_code_sample,
+        ].join("\n")
       end
 
       def binary_data_example
@@ -43,14 +76,18 @@ module GrapeSlate
         end.compact.to_h
       end
 
-      def headers
-        headers = Headers.new(route.headers)
-        {
-          'Content-Type' => 'application/json',
-          'Authorization' => 'Bearer <YOUR_TOKEN>'
-        }.merge(headers.route_header_examples).map do |key, value|
+      def curl_headers
+        headers.map do |key, value|
           "--header '#{key}: #{value}'"
         end.join(" ").strip
+      end
+
+      def headers
+        headers = Headers.new(route.headers)
+                {
+                  'Content-Type' => 'application/json',
+                  'Authorization' => 'Bearer <YOUR_TOKEN>'
+                }.merge(headers.route_header_examples)
       end
 
       def response_sample
