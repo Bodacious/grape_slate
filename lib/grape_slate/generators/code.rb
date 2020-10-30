@@ -21,7 +21,7 @@ module GrapeSlate
       def curl_code_sample
         <<~BASH
         ``` shell
-        curl #{documentable_route_path(route)}" \
+        curl #{documentable_route_path(route)} \
           --request #{route.request_method}\
           --data '#{param_examples.to_json}' \
           #{curl_headers} \
@@ -34,7 +34,7 @@ module GrapeSlate
         <<~RUBY
         ``` ruby
         Faraday.#{route.request_method.downcase}("#{documentable_route_path(route)}", \
-        params: #{param_examples}, 
+        params: #{param_examples},
         headers: #{headers})
         ```
         RUBY
