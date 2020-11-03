@@ -9,10 +9,9 @@ module GrapeSlate
       def generate
         namespace_array = []
 
-        namespace_array << content_tag(:h1, title)
-
+        namespace_array << content_tag(:h2, "#{namespace.split("/").select(&:present? )[0..-2].map(&:humanize).join(" / ")} / #{title}")
         routes.map do |route|
-          namespace_array << content_tag(:h2, route.description)
+          namespace_array << content_tag(:h3, route.description)
           namespace_array << Code.new(route).generate
           namespace_array << route.options[:detail] if route.options[:detail].present?
           namespace_array << Request.new(route).generate
@@ -24,7 +23,15 @@ module GrapeSlate
       end
 
       def filename
-        namespace.split('/').last
+        filepath.cleanpath.basename
+      end
+
+      def dirname
+        filepath.cleanpath.dirname
+      end
+
+      def filepath
+        Pathname.new(namespace)
       end
 
       private
@@ -32,7 +39,7 @@ module GrapeSlate
       attr_accessor :namespace, :routes
 
       def title
-        filename.titleize
+        filename.to_s.titleize
       end
     end
   end

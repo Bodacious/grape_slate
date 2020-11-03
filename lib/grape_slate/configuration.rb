@@ -21,12 +21,16 @@ module GrapeSlate
     # @return [String]
     attr_accessor :output_dir
 
+    # The output dir for the generated partials
+    # @return [String]
+    attr_accessor :partials_dir
+
     # The base path of the API
     # @return [String]
     attr_accessor :base_path
 
     def initialize
-      @name = 'My API'
+      @name = 'BOXT API'
       @description = 'My API description'
       @include_root = false
       @resource_exclusion = []

@@ -2,36 +2,16 @@ require 'fileutils'
 
 module GrapeSlate
   class DocumentationGenerator
+    attr_accessor :filenames
     def initialize(api_class)
       self.api_class = api_class
+      self.filenames = []
     end
 
     def run!
-      FileUtils::mkdir_p "#{GrapeSlate.configuration.output_dir}/generated"
-
-      filenames = []
-
-      namespaces.each do |namespace|
-        document = Generators::Document.new namespace, routes_for(namespace)
-        document_contents = document.generate
-
-        filenames << document.filename
-
-        File.open(File.join(GrapeSlate.configuration.output_dir, 'generated', document.filename + file_extension), 'w+') do |file|
-          document_contents.each do |content|
-            file.write content
-            file.write "\n\n"
-          end
-        end
-      end
-
-      File.open(File.join(GrapeSlate.configuration.output_dir, '_generated.html.erb'), 'w+') do |file|
-        file.write "<% docs = #{filenames} %>\n"
-        file.write "<% docs.each do |doc| %>\n"
-        file.write "  <%= partial \"generated/\#{doc}\" %>\n"
-        file.write "<% end %>\n"
-      end
-
+      ensure_partials_dir
+      generate_partials!
+      generate_index!
       return true
     end
 
@@ -40,6 +20,56 @@ module GrapeSlate
     end
 
     private
+
+    def ensure_partials_dir
+      FileUtils.mkdir_p(
+        File.join(
+          GrapeSlate.configuration.partials_dir, GrapeSlate.configuration.partials_dir
+        )
+      )
+    end
+
+    def generate_partials!
+      namespaces.each do |namespace|
+        document = Generators::Document.new namespace, routes_for(namespace)
+        document_contents = document.generate
+
+        filenames << document.filepath.to_s
+        dirpath = Pathname.new(
+          File.join(
+            GrapeSlate.configuration.output_dir,
+            GrapeSlate.configuration.partials_dir,
+            document.dirname
+          )
+        )
+        filepath = dirpath.join(document.filename.to_s + file_extension)
+
+        FileUtils.mkdir_p(dirpath)
+
+        File.open(filepath, 'w+') do |file|
+          document_contents.each do |content|
+            file.write content
+            file.write "\n\n"
+          end
+        end
+      end
+    end
+
+    def index_path
+      File.join(GrapeSlate.configuration.output_dir, 'includes', '_resources.html.erb')
+    end
+
+    def generate_index!
+      content = <<~RHTML
+        <h1 id="#resources">Resources</h1>
+      RHTML
+      filenames.each do |filename|
+        content << "<%= partial \"#{GrapeSlate.configuration.partials_dir}#{filename}\" %>\n"
+      end
+      File.open(index_path, 'w+') do |file|
+        file.write content
+      end
+    end
 
     attr_accessor :api_class
 

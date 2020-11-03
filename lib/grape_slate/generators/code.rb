@@ -61,7 +61,7 @@ module GrapeSlate
           curl_code_sample,
           ruby_code_sample,
           js_code_sample,
-        ].join("\n")
+        ].join("\n\n\n")
       end
 
       def binary_data_example
